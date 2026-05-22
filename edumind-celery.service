@@ -1,0 +1,14 @@
+[Unit]
+Description=EduMind Celery Worker
+After=network.target
+
+[Service]
+Type=forking
+User=www-data
+Group=www-data
+WorkingDirectory=c:/Users/Dell/OneDrive/Desktop/LMS_PROJECT
+Environment="PATH=c:/Users/Dell/OneDrive/Desktop/LMS_PROJECT/venv/Scripts"
+ExecStart=c:/Users/Dell/OneDrive/Desktop/LMS_PROJECT/venv/Scripts/celery -A backend.workers.celery_app worker --loglevel=info
+
+[Install]
+WantedBy=multi-user.target

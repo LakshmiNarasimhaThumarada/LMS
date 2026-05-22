@@ -1,0 +1,241 @@
+import streamlit as st
+
+# ==========================================
+# DESIGN TOKENS
+# ==========================================
+
+# Color Palette
+COLORS = {
+    # Backgrounds
+    'bg_primary': '#0f1419',      # Main app background
+    'bg_secondary': '#1f2937',    # Cards, panels, sidebar
+    'bg_tertiary': '#111827',     # Input fields, hover states
+    'bg_overlay': 'rgba(0,0,0,0.6)',  # Modal overlays
+    
+    # Borders
+    'border_default': '#374151',  # Default borders
+    'border_focus': '#3b82f6',    # Focused elements
+    'border_subtle': '#1f2937',   # Very subtle dividers
+    
+    # Text
+    'text_primary': '#f9fafb',    # Main headings, body text
+    'text_secondary': '#9ca3af',  # Labels, descriptions
+    'text_tertiary': '#6b7280',   # Disabled, placeholder text
+    'text_inverse': '#111827',    # Text on light backgrounds
+    
+    # Accents
+    'accent_blue': '#3b82f6',     # Primary CTA buttons
+    'accent_blue_hover': '#2563eb',
+    'accent_blue_light': 'rgba(59, 130, 246, 0.1)',
+    'accent_success': '#10b981',  # Success messages
+    'accent_warning': '#f59e0b',  # Warnings
+    'accent_error': '#ef4444',    # Errors, validation
+    'accent_purple': '#8b5cf6',   # Secondary actions
+}
+
+# Typography Scale (8px base)
+TYPOGRAPHY = {
+    'xs': '12px',     # Tiny labels, timestamps
+    'sm': '14px',     # Small body text
+    'base': '16px',   # Default body text
+    'lg': '18px',     # Emphasized text
+    'xl': '20px',     # Section subtitles
+    '2xl': '24px',    # Page titles
+    '3xl': '30px',    # Dashboard metrics
+    '4xl': '36px',    # Large metrics
+    '5xl': '48px',    # Hero text
+    '6xl': '56px',    # Landing page hero
+}
+
+# Font Weights
+FONT_WEIGHTS = {
+    'normal': 400,
+    'medium': 500,
+    'semibold': 600,
+    'bold': 700,
+}
+
+# Spacing Scale (8px base system)
+SPACING = {
+    '1': '8px',
+    '2': '16px',
+    '3': '24px',
+    '4': '32px',
+    '5': '40px',
+    '6': '48px',
+    '8': '64px',
+    '10': '80px',
+    '12': '96px',
+}
+
+# Border Radius
+RADIUS = {
+    'sm': '6px',
+    'md': '8px',
+    'lg': '12px',
+    'xl': '16px',
+    'full': '9999px',
+}
+
+# Shadows
+SHADOWS = {
+    'sm': '0 1px 2px rgba(0,0,0,0.05)',
+    'md': '0 4px 6px rgba(0,0,0,0.1)',
+    'lg': '0 10px 15px rgba(0,0,0,0.1)',
+    'xl': '0 20px 25px rgba(0,0,0,0.1)',
+    'glow_blue': '0 4px 20px rgba(59, 130, 246, 0.4)',
+}
+
+# Transitions
+TRANSITIONS = {
+    'fast': '150ms ease-in-out',
+    'normal': '200ms ease-in-out',
+    'slow': '300ms ease-in-out',
+}
+
+# ==========================================
+# REUSABLE COMPONENTS
+# ==========================================
+
+def inject_custom_css():
+    """Inject global CSS for entire app - call this at the start of every page"""
+    st.markdown(f"""
+    <style>
+    /* Reset and Base Styles */
+    .stApp {{
+        background-color: {COLORS['bg_primary']};
+        color: {COLORS['text_primary']};
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }}
+    
+    /* Hide Streamlit Branding */
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    header {{visibility: hidden;}}
+    
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {{
+        background-color: {COLORS['bg_secondary']};
+        border-right: 1px solid {COLORS['border_default']};
+    }}
+    
+    /* Input Fields */
+    .stTextInput input, .stTextArea textarea {{
+        background-color: {COLORS['bg_tertiary']} !important;
+        border: 1px solid {COLORS['border_default']} !important;
+        color: {COLORS['text_primary']} !important;
+        border-radius: {RADIUS['md']} !important;
+        padding: 12px 16px !important;
+        font-size: {TYPOGRAPHY['base']} !important;
+    }}
+    
+    .stTextInput input:focus, .stTextArea textarea:focus {{
+        border-color: {COLORS['border_focus']} !important;
+        box-shadow: 0 0 0 3px {COLORS['accent_blue_light']} !important;
+    }}
+    
+    /* Buttons */
+    .stButton button {{
+        background: linear-gradient(135deg, {COLORS['accent_blue']} 0%, {COLORS['accent_blue_hover']} 100%);
+        color: white;
+        border: none;
+        border-radius: {RADIUS['lg']};
+        padding: 14px 32px;
+        font-weight: {FONT_WEIGHTS['semibold']};
+        font-size: {TYPOGRAPHY['base']};
+        transition: all {TRANSITIONS['normal']};
+        box-shadow: {SHADOWS['glow_blue']};
+    }}
+    
+    .stButton button:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 6px 28px rgba(59, 130, 246, 0.6);
+    }}
+    
+    /* Cards */
+    .card {{
+        background-color: {COLORS['bg_secondary']};
+        border: 1px solid {COLORS['border_default']};
+        border-radius: {RADIUS['lg']};
+        padding: {SPACING['3']};
+        margin-bottom: {SPACING['2']};
+    }}
+    
+    /* Success/Error Messages */
+    .stSuccess, .stError, .stWarning {{
+        border-radius: {RADIUS['md']};
+        padding: {SPACING['2']};
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+
+def create_card(content, padding=SPACING['3']):
+    """Create a styled card container"""
+    return f"""
+    <div style="
+        background-color: {COLORS['bg_secondary']};
+        border: 1px solid {COLORS['border_default']};
+        border-radius: {RADIUS['lg']};
+        padding: {padding};
+        margin-bottom: {SPACING['2']};
+    ">
+        {content}
+    </div>
+    """
+
+def create_metric_card(label, value, subtitle='', icon='📊'):
+    """Create a metric display card"""
+    return f"""
+    <div style="
+        background-color: {COLORS['bg_secondary']};
+        border: 1px solid {COLORS['border_default']};
+        border-radius: {RADIUS['lg']};
+        padding: {SPACING['3']};
+        text-align: center;
+    ">
+        <div style="font-size: {TYPOGRAPHY['3xl']}; margin-bottom: {SPACING['1']};">{icon}</div>
+        <div style="
+            font-size: {TYPOGRAPHY['xs']};
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: {COLORS['text_secondary']};
+            margin-bottom: {SPACING['1']};
+        ">{label}</div>
+        <div style="
+            font-size: {TYPOGRAPHY['4xl']};
+            font-weight: {FONT_WEIGHTS['bold']};
+            color: {COLORS['text_primary']};
+            margin-bottom: 4px;
+        ">{value}</div>
+        {f"<div style='font-size: {TYPOGRAPHY['sm']}; color: {COLORS['text_tertiary']};'>{subtitle}</div>" if subtitle else ''}
+    </div>
+    """
+
+def create_button(text, variant='primary', fullwidth=False):
+    """Create a styled button"""
+    styles = {
+        'primary': f'background: linear-gradient(135deg, {COLORS["accent_blue"]} 0%, {COLORS["accent_blue_hover"]} 100%); color: white;',
+        'secondary': f'background: transparent; border: 2px solid {COLORS["border_default"]}; color: {COLORS["text_secondary"]};',
+        'success': f'background: {COLORS["accent_success"]}; color: white;',
+        'danger': f'background: {COLORS["accent_error"]}; color: white;'
+    }
+    
+    width = 'width: 100%;' if fullwidth else ''
+    
+    return f"""
+    <button style="
+        {styles.get(variant, styles['primary'])}
+        border: none;
+        border-radius: {RADIUS['lg']};
+        padding: 14px 32px;
+        font-weight: {FONT_WEIGHTS['semibold']};
+        font-size: {TYPOGRAPHY['base']};
+        cursor: pointer;
+        transition: all {TRANSITIONS['normal']};
+        box-shadow: {SHADOWS['glow_blue']};
+        {width}
+    " onmouseover="this.style.transform='translateY(-2px)'" 
+       onmouseout="this.style.transform='translateY(0)'">
+        {text}
+    </button>
+    """
