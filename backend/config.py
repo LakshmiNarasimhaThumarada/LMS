@@ -1,5 +1,6 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
+import os
 
 class Settings(BaseSettings):
     # API
@@ -13,6 +14,7 @@ class Settings(BaseSettings):
     
     # LLM APIs
     GROQ_API_KEY: str = ""
+    GROQ_MODEL: str = "llama-3.1-8b-instant"
     GOOGLE_API_KEY: str = ""
     
     # Redis
@@ -41,9 +43,10 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_HOURS: int = 168
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-        extra = "allow"
+    model_config = SettingsConfigDict(
+        env_file=os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"),
+        env_file_encoding='utf-8',
+        extra='allow'
+    )
 
 settings = Settings()

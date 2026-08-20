@@ -28,7 +28,7 @@ class ScheduleGeneratorAgent(BaseAgent):
     """
     
     def __init__(self):
-        super().__init__(model_name="llama-3.1-70b-versatile")
+        super().__init__()
         self.graph = self.create_graph()
     
     def create_graph(self) -> StateGraph:

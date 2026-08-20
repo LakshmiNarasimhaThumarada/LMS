@@ -6,7 +6,7 @@ st.set_page_config(
     page_title="EduMind - Your Personal AI Tutor",
     page_icon="🎓",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Apply Global Design System

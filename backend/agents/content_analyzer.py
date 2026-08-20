@@ -28,7 +28,7 @@ class ContentAnalyzerAgent(BaseAgent):
     """
     
     def __init__(self):
-        super().__init__(model_name="llama-3.1-70b-versatile")
+        super().__init__()
         self.graph = self.create_graph()
     
     def create_graph(self) -> StateGraph:
@@ -152,7 +152,17 @@ ANALYZE NOW:"""
             hours_per_chapter = base_hours.get(difficulty, 3.0)
             
             # Adjust based on page count
-            pages_per_chapter = state['page_count'] / len(state['chapters'])
+            num_chapters = len(state['chapters'])
+            if num_chapters == 0:
+                state['chapters'] = [{
+                    "number": 1,
+                    "name": "Core Material Overview",
+                    "topics": ["Introduction", "Key Concepts", "Summary"]
+                }]
+                state['total_topics'] = 3
+                num_chapters = 1
+                
+            pages_per_chapter = state['page_count'] / num_chapters
             
             if pages_per_chapter > 30:
                 hours_per_chapter *= 1.3

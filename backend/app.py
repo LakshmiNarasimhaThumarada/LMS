@@ -4,11 +4,15 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from contextlib import asynccontextmanager
 import os
 import sys
+
 # Add the parent directory of 'backend' to sys.path so 'backend.*' imports work from anywhere
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from dotenv import load_dotenv
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
 from backend.config import settings
-from backend.routes import planner, notifications, progress, calendar
+from backend.routes import planner, notifications, progress, calendar, chat
 from backend.utils.db_indexes import create_indexes
 
 # Database connection
@@ -51,6 +55,7 @@ app.include_router(planner.router, prefix="/api/planner", tags=["Study Planner"]
 app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
 app.include_router(progress.router, prefix="/api/progress", tags=["Progress"])
 app.include_router(calendar.router, prefix="/api/calendar", tags=["Calendar"])
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat Agent"])
 
 @app.get("/")
 async def root():

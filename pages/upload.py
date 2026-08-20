@@ -92,14 +92,34 @@ with st.container():
     
     if uploaded_file is not None:
         if st.button("Initialize Synchronization", type="primary", use_container_width=True):
-            files = {"pdf_file": (uploaded_file.name, uploaded_file.getvalue(), "application/pdf")}
+            files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/pdf")}
             try:
                 with st.spinner("Processing document architecture..."):
+                    # 1. Sync with Express Server (Port 6000)
                     r = requests.post("http://127.0.0.1:6000/api/pdf/upload", headers=headers, files=files, timeout=60)
                 
                 if r.status_code == 201:
+                    pdf_id = r.json().get("pdf_id")
+                    
+                    # 2. Forward to FastAPI (Port 8000) for analysis and RAG embedding
+                    with st.spinner("Analyzing and indexing in RAG vector database..."):
+                        fastapi_headers = {"Authorization": f"Bearer {token}"}
+                        fastapi_files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/pdf")}
+                        
+                        try:
+                            f_res = requests.post(
+                                f"http://127.0.0.1:8000/api/planner/analyze-pdf?pdf_id={pdf_id}",
+                                headers=fastapi_headers,
+                                files=fastapi_files,
+                                timeout=120
+                            )
+                            if f_res.status_code != 200:
+                                st.warning(f"Metadata synced, but indexing had issues: {f_res.text}")
+                        except Exception as fe:
+                            st.warning(f"Metadata synced, but could not reach indexing backend: {str(fe)}")
+                    
                     st.success("Synchronization successful. Material is now accessible.")
-                    time.sleep(1)
+                    time.sleep(1.5)
                     st.rerun()
                 else:
                     st.error(f"Synchronization failed: {r.json().get('message', 'Protocol error')}")
@@ -117,8 +137,20 @@ try:
         if pdfs:
             import pandas as pd
             df = pd.DataFrame(pdfs)
-            df['size'] = df['size'].apply(lambda x: f"{x/1024/1024:.2f} MB")
-            df['uploaded_at'] = pd.to_datetime(df['uploaded_at']).dt.strftime('%Y-%m-%d %H:%M')
+            
+            # Map columns safely to avoid KeyErrors
+            if 'upload_date' in df.columns:
+                df['uploaded_at'] = df['upload_date']
+            
+            if 'uploaded_at' in df.columns:
+                df['uploaded_at'] = pd.to_datetime(df['uploaded_at']).dt.strftime('%Y-%m-%d %H:%M')
+            else:
+                df['uploaded_at'] = "Unknown"
+                
+            if 'size' in df.columns:
+                df['size'] = df['size'].apply(lambda x: f"{x/1024/1024:.2f} MB" if pd.notnull(x) else "N/A")
+            else:
+                df['size'] = "N/A"
             
             st.dataframe(
                 df[['filename', 'size', 'uploaded_at']], 
@@ -147,7 +179,7 @@ try:
             st.info("System awaiting initial material ingestion.")
     else:
         st.error("Repository service unreachable.")
-except:
+except Exception as e:
     st.info("Awaiting synchronization with material database.")
 
 st.markdown("<br><br><br>", unsafe_allow_html=True)

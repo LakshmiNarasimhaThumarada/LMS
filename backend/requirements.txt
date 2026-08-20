@@ -8,6 +8,7 @@ langchain==0.1.6
 langgraph==0.0.20
 langchain-groq==0.0.1
 langchain-google-genai==0.0.6
+langchain-community==0.0.19
 
 # Database
 pymongo==4.6.1
@@ -40,3 +41,9 @@ python-jose[cryptography]==3.3.0
 # Streamlit (Frontend)
 streamlit==1.30.0
 plotly==5.18.0
+
+# RAG & Embeddings
+chromadb==1.5.1
+sentence-transformers
+pypdf
+

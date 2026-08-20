@@ -19,7 +19,7 @@ def verify_jwt(token: str) -> dict:
             raise HTTPException(status_code=401, detail="Token expired")
         
         return {
-            'id': payload.get('user_id'),
+            'id': payload.get('user_id') or payload.get('id'),
             'email': payload.get('email'),
             'role': payload.get('role', 'student')
         }

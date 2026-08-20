@@ -1,9 +1,9 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Union
 from datetime import datetime
 
 class Chapter(BaseModel):
-    number: int
+    number: Union[int, float, str]
     name: str
     topics: List[str]
 
@@ -38,7 +38,7 @@ class Session(BaseModel):
     id: str
     date: str
     time: str
-    chapter_number: Optional[int] = None
+    chapter_number: Optional[Union[int, float, str]] = None
     chapter_name: str
     topics: List[str] = Field(default=[])
     duration: float

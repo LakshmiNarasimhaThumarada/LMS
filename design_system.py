@@ -115,8 +115,46 @@ def inject_custom_css():
     
     /* Sidebar Styling */
     [data-testid="stSidebar"] {{
-        background-color: {COLORS['bg_secondary']};
-        border-right: 1px solid {COLORS['border_default']};
+        background-color: {COLORS['bg_secondary']} !important;
+        border-right: 1px solid {COLORS['border_default']} !important;
+    }}
+    
+    /* Clean Sidebar Nav Links */
+    [data-testid="stSidebarNavLink"] {{
+        border-radius: {RADIUS['md']} !important;
+        margin: 4px 12px !important;
+        padding: 8px 12px !important;
+        font-weight: {FONT_WEIGHTS['medium']} !important;
+        transition: all {TRANSITIONS['fast']} !important;
+    }}
+    
+    [data-testid="stSidebarNavLink"]:hover {{
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: {COLORS['text_primary']} !important;
+    }}
+    
+    [data-testid="stSidebarNavLink"][aria-current="page"] {{
+        background: linear-gradient(135deg, {COLORS['accent_blue']} 0%, {COLORS['accent_blue_hover']} 100%) !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+    }}
+    
+    /* Sidebar Button overrides (e.g. Logout button) */
+    [data-testid="stSidebar"] button {{
+        background: transparent !important;
+        border: 1px solid {COLORS['accent_error']} !important;
+        color: {COLORS['accent_error']} !important;
+        font-weight: {FONT_WEIGHTS['semibold']} !important;
+        border-radius: {RADIUS['md']} !important;
+        transition: all {TRANSITIONS['fast']} !important;
+        box-shadow: none !important;
+        width: 100% !important;
+    }}
+    
+    [data-testid="stSidebar"] button:hover {{
+        background: {COLORS['accent_error']} !important;
+        color: white !important;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
     }}
     
     /* Input Fields */

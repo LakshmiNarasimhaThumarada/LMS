@@ -15,6 +15,17 @@ st.set_page_config(
 # Inject Global CSS
 inject_custom_css()
 
+# Fetch student documents from Node.js database
+def fetch_student_pdfs(token):
+    headers = {"Authorization": f"Bearer {token}"}
+    try:
+        res = requests.get("http://localhost:6000/api/student/pdfs", headers=headers, timeout=5)
+        if res.status_code == 200:
+            return res.json()
+    except Exception:
+        pass
+    return []
+
 # Custom Chat CSS
 st.markdown(f"""
 <style>
@@ -218,6 +229,20 @@ with st.sidebar:
     st.markdown('<div class="sidebar-title">AI Academic Assistant</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-status"><div class="status-dot"></div>System Status: Operational • v2.0</div>', unsafe_allow_html=True)
     
+    # Material selection
+    pdfs = fetch_student_pdfs(st.session_state.jwt_token)
+    pdf_options = {pdf["filename"]: pdf["id"] for pdf in pdfs}
+    
+    st.markdown('<hr style="margin: 10px 0; border-color: #374151;">', unsafe_allow_html=True)
+    st.markdown('<div style="font-size: 11px; color: #9ca3af; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;">Study Material</div>', unsafe_allow_html=True)
+    selected_pdf_name = st.selectbox(
+        "select_pdf",
+        options=["None (General Chat)"] + list(pdf_options.keys()),
+        label_visibility="collapsed"
+    )
+    selected_pdf_id = pdf_options.get(selected_pdf_name) if selected_pdf_name != "None (General Chat)" else None
+    st.markdown('<hr style="margin: 10px 0 20px 0; border-color: #374151;">', unsafe_allow_html=True)
+
     col1, col2 = st.columns(2)
     with col1:
         if st.button("✨ New Chat", use_container_width=True):
@@ -291,10 +316,11 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         # 2. Call API
         try:
             token = st.session_state.jwt_token
-            api_url = "http://localhost:6000/api/ai/chat"
+            api_url = "http://localhost:8000/api/chat"
             payload = {
                 "message": st.session_state.messages[-1]["content"],
-                "history": st.session_state.messages[:-1]
+                "pdf_id": selected_pdf_id,
+                "conversation_history": st.session_state.messages[:-1]
             }
             headers = {"Authorization": f"Bearer {token}"}
             

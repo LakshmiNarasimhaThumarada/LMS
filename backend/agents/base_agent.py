@@ -14,9 +14,10 @@ class AgentState(TypedDict):
 class BaseAgent:
     """Base class for all LangGraph agents"""
     
-    def __init__(self, model_name: str = "llama-3.1-70b-versatile"):
+    def __init__(self, model_name: Optional[str] = None):
+        model = model_name or settings.GROQ_MODEL
         self.llm = ChatGroq(
-            model=model_name,
+            model=model,
             api_key=settings.GROQ_API_KEY,
             temperature=0.0,  # Deterministic for analysis
             max_tokens=8000

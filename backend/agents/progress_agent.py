@@ -1,7 +1,7 @@
 import os
 import requests
 # Using direct DB access for analysis
-from db import users_collection, db
+from backend.db import users_collection, db
 from .prompts import SUPERVISOR_PROMPT
 from bson import ObjectId
 

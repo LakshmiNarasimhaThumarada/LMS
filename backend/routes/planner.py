@@ -27,11 +27,12 @@ async def get_user(user_data: dict = Depends(require_jwt)):
 @router.post("/analyze-pdf", response_model=PDFAnalysisResponse)
 async def analyze_pdf(
     file: UploadFile = File(...),
+    pdf_id: Optional[str] = None,
     db = Depends(get_db),
     user = Depends(get_user)
 ):
     """
-    Analyzes uploaded PDF for study planning.
+    Analyzes uploaded PDF for study planning and adds it to RAG vector database.
     """
     # Use relative paths for Windows compatibility
     temp_dir = "./temp"
@@ -61,8 +62,9 @@ async def analyze_pdf(
         analyzer = ContentAnalyzerAgent()
         analysis_dict = analyzer.analyze(temp_file_path)
         
-        # Generate PDF ID
-        pdf_id = str(ObjectId())
+        # Generate or use PDF ID
+        if not pdf_id:
+            pdf_id = str(ObjectId())
         
         # Save to permanent storage
         user_pdf_dir = os.path.join(data_dir, str(user['id']))
@@ -86,6 +88,13 @@ async def analyze_pdf(
         }
         
         await db.pdf_analysis.insert_one(pdf_doc)
+        
+        # Add to Chroma vector database for RAG chat
+        try:
+            from backend.agents.rag import add_pdf_to_vectorstore
+            add_pdf_to_vectorstore(permanent_path, pdf_id)
+        except Exception as e:
+            print(f"Error indexing PDF in Chroma DB: {e}")
         
         return PDFAnalysisResponse(
             pdf_id=pdf_id,
