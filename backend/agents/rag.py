@@ -33,11 +33,35 @@ def add_pdf_to_vectorstore(pdf_path, pdf_id):
     )
     return True
 
-def get_relevant_context(query, pdf_id, k=3):
-    """Retrieves top-k context chunks for a specific PDF."""
+def get_relevant_context(query, pdf_id, k=4):
+    """Retrieves top-k context chunks for a specific PDF, with smart summary detection."""
     db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embeddings)
     
-    # Filter by pdf_id metadata
+    # Check if the user is asking for a summary/overview of the document
+    summary_keywords = ["summarize", "summary", "overview", "synopsis", "what is this", "what is the document", "about"]
+    is_summary_request = any(keyword in query.lower() for keyword in summary_keywords)
+    
+    if is_summary_request:
+        try:
+            # Retrieve all chunks for this PDF to extract the beginning of the file (introduction/abstract)
+            all_data = db.get(filter={"pdf_id": str(pdf_id)})
+            documents = all_data.get("documents", [])
+            metadatas = all_data.get("metadatas", [])
+            
+            if documents:
+                # Pair documents and metadata, and sort by page number
+                paired_docs = list(zip(documents, metadatas))
+                paired_docs.sort(key=lambda x: x[1].get("page", 0))
+                
+                # Take the first k chunks representing the introduction/start of the PDF
+                selected_docs = paired_docs[:k]
+                context = "\n\n".join([doc[0] for doc in selected_docs])
+                if context.strip():
+                    return context
+        except Exception as e:
+            print(f"Error fetching summary chunks: {e}")
+            
+    # Fallback to standard semantic similarity search
     results = db.similarity_search(
         query, 
         k=k, 

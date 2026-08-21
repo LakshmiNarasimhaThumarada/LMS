@@ -26,7 +26,11 @@ def tutor_node(state):
     
     context = ""
     if pdf_id:
+        print(f"\n[DEBUG TUTOR] Querying RAG for PDF ID: {pdf_id} with query: {message}")
         context = get_relevant_context(message, pdf_id)
+        print(f"[DEBUG TUTOR] Retrieved Context length: {len(context)} characters.")
+    else:
+        print(f"\n[DEBUG TUTOR] No PDF selected (pdf_id is empty). Chatting in General mode.")
         
     formatted_prompt = TUTOR_PROMPT.format(context=context, question=message)
     

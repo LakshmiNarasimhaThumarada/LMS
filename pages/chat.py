@@ -19,11 +19,13 @@ inject_custom_css()
 def fetch_student_pdfs(token):
     headers = {"Authorization": f"Bearer {token}"}
     try:
-        res = requests.get("http://localhost:6000/api/student/pdfs", headers=headers, timeout=5)
+        res = requests.get("http://127.0.0.1:6000/api/student/pdfs", headers=headers, timeout=5)
         if res.status_code == 200:
             return res.json()
-    except Exception:
-        pass
+        else:
+            print(f"[DEBUG FETCH PDFs] Failed: {res.status_code} - {res.text}")
+    except Exception as e:
+        print(f"[DEBUG FETCH PDFs] Connection error: {e}")
     return []
 
 # Custom Chat CSS
@@ -229,18 +231,55 @@ with st.sidebar:
     st.markdown('<div class="sidebar-title">AI Academic Assistant</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-status"><div class="status-dot"></div>System Status: Operational • v2.0</div>', unsafe_allow_html=True)
     
-    # Material selection
+    # Material selection - Auto-detect latest uploaded PDF
     pdfs = fetch_student_pdfs(st.session_state.jwt_token)
-    pdf_options = {pdf["filename"]: pdf["id"] for pdf in pdfs}
     
+    if pdfs:
+        # The list is sorted by uploadDate descending from the API
+        selected_pdf_id = pdfs[0]["id"]
+        selected_pdf_name = pdfs[0]["filename"]
+        st.sidebar.info(f"📚 Active: {selected_pdf_name}")
+    else:
+        selected_pdf_id = None
+        st.sidebar.info("🌐 Active: General Chat")
+        
     st.markdown('<hr style="margin: 10px 0; border-color: #374151;">', unsafe_allow_html=True)
-    st.markdown('<div style="font-size: 11px; color: #9ca3af; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;">Study Material</div>', unsafe_allow_html=True)
-    selected_pdf_name = st.selectbox(
-        "select_pdf",
-        options=["None (General Chat)"] + list(pdf_options.keys()),
-        label_visibility="collapsed"
-    )
-    selected_pdf_id = pdf_options.get(selected_pdf_name) if selected_pdf_name != "None (General Chat)" else None
+    
+    # Inline PDF Uploader
+    st.markdown('<div style="font-size: 11px; color: #9ca3af; font-weight: bold; margin-top: 15px; margin-bottom: 6px; text-transform: uppercase;">Upload & Index New PDF</div>', unsafe_allow_html=True)
+    chat_uploaded_file = st.file_uploader("Upload PDF", type=["pdf"], key="chat_pdf_uploader", label_visibility="collapsed")
+    if chat_uploaded_file is not None:
+        if st.button("🚀 Sync & Chat", key="btn_chat_sync", use_container_width=True):
+            token = st.session_state.jwt_token
+            headers = {"Authorization": f"Bearer {token}"}
+            files = {"file": (chat_uploaded_file.name, chat_uploaded_file.getvalue(), "application/pdf")}
+            try:
+                with st.spinner("Syncing with Express..."):
+                    r = requests.post("http://127.0.0.1:6000/api/pdf/upload", headers=headers, files=files, timeout=60)
+                
+                if r.status_code == 201:
+                    pdf_id = r.json().get("pdf_id")
+                    with st.spinner("Analyzing & indexing in RAG vector database..."):
+                        fastapi_headers = {"Authorization": f"Bearer {token}"}
+                        fastapi_files = {"file": (chat_uploaded_file.name, chat_uploaded_file.getvalue(), "application/pdf")}
+                        f_res = requests.post(
+                            f"http://127.0.0.1:8000/api/planner/analyze-pdf?pdf_id={pdf_id}",
+                            headers=fastapi_headers,
+                            files=fastapi_files,
+                            timeout=120
+                        )
+                        if f_res.status_code == 200:
+                            st.success("PDF synced and indexed successfully!")
+                            st.session_state["newly_uploaded_pdf_name"] = chat_uploaded_file.name
+                            time.sleep(1.0)
+                            st.rerun()
+                        else:
+                            st.warning(f"Metadata synced, but indexing had issues: {f_res.text}")
+                else:
+                    st.error("Upload failed on database server.")
+            except Exception as e:
+                st.error(f"Sync failed: {str(e)}")
+                
     st.markdown('<hr style="margin: 10px 0 20px 0; border-color: #374151;">', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
@@ -316,7 +355,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         # 2. Call API
         try:
             token = st.session_state.jwt_token
-            api_url = "http://localhost:8000/api/chat"
+            api_url = "http://127.0.0.1:8000/api/chat"
             payload = {
                 "message": st.session_state.messages[-1]["content"],
                 "pdf_id": selected_pdf_id,
