@@ -276,6 +276,37 @@ app.post('/api/pdf/upload', authenticateToken, upload.single('file'), async (req
     }
 });
 
+// PDF Delete Endpoint
+app.delete('/api/pdf/:id', authenticateToken, async (req, res) => {
+    try {
+        const pdfId = req.params.id;
+        const pdf = await PDF.findOne({ _id: pdfId, userId: req.user.id });
+        if (!pdf) {
+            return res.status(404).json({ message: 'PDF not found' });
+        }
+
+        // Delete from disk if it exists
+        const filePath = path.join(__dirname, 'uploads', pdf.filename);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        // Delete from Express MongoDB PDF collection
+        await PDF.findByIdAndDelete(pdfId);
+
+        // Delete from FastAPI MongoDB pdf_analysis collection if it exists
+        try {
+            await mongoose.connection.db.collection('pdf_analysis').deleteOne({ _id: new mongoose.Types.ObjectId(pdfId) });
+        } catch (dbErr) {
+            console.log("FastAPI record delete skipped:", dbErr.message);
+        }
+
+        res.json({ message: 'PDF deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ message: 'Error deleting PDF', error: err.message });
+    }
+});
+
 // Chat Endpoint (Mock AI response)
 app.post('/api/chat', authenticateToken, async (req, res) => {
     try {

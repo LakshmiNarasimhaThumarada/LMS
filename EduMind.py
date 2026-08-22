@@ -1,12 +1,17 @@
 import streamlit as st
 from design_system import *
+import design_system
+
+# Initialize sidebar state in session state
+if 'sidebar_state' not in st.session_state:
+    st.session_state.sidebar_state = "expanded"
 
 # MUST be the first streamlit command
 st.set_page_config(
     page_title="EduMind - Your Personal AI Tutor",
     page_icon="🎓",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state=st.session_state.sidebar_state
 )
 
 # Apply Global Design System
@@ -37,8 +42,6 @@ if 'user' not in st.session_state:
 else:
     user = st.session_state['user']
     role = user.get('role', 'student')
-    
-    sidebar_branding()
 
     # Build Navigation
     if role == 'admin':
@@ -56,12 +59,9 @@ else:
             st.Page("pages/settings.py", title="Settings", icon="⚙️"),
         ]
     
-    pg = st.navigation(pages, position="sidebar")
+    pg = st.navigation(pages, position="hidden")
     
-    # Simple Sidebar Logout Button at the bottom
-    st.sidebar.markdown("<div style='flex-grow: 1;'></div>", unsafe_allow_html=True)
-    if st.sidebar.button("🚪 Logout", use_container_width=True):
-        st.session_state.clear()
-        st.rerun()
+    # Render custom top navigation bar
+    design_system.render_top_navbar()
         
     pg.run()

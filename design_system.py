@@ -277,3 +277,109 @@ def create_button(text, variant='primary', fullwidth=False):
         {text}
     </button>
     """
+
+def render_top_navbar():
+    """Render custom horizontal top navigation bar across all pages"""
+    if 'user' not in st.session_state:
+        return
+        
+    import inspect
+    import os
+    
+    # Detect active page from call stack
+    active_page = ""
+    for frame_info in inspect.stack():
+        filename = frame_info.filename
+        if "pages" in filename:
+            active_page = os.path.basename(filename)
+            break
+
+    # JS Trigger to expand/collapse sidebar automatically based on page
+    is_active_chat_str = "true" if active_page == "chat.py" else "false"
+    
+    js_code = """
+    <script>
+    const parentDoc = window.parent.document;
+    const collapseBtn = parentDoc.querySelector('button[data-testid="stSidebarCollapseButton"]');
+    const expandBtn = parentDoc.querySelector('button[data-testid="stCollapsedSidebarCollapsed"]') || 
+                      parentDoc.querySelector('[data-testid="collapsedSidebarCollapsed"]') ||
+                      parentDoc.querySelector('.collapsed-sidebar-collapsed') ||
+                      parentDoc.querySelector('button[class*="collapsedSidebarCollapsed"]') ||
+                      parentDoc.querySelector('button[aria-label="Expand sidebar"]');
+    
+    const isActiveChat = IS_ACTIVE_CHAT;
+    
+    if (isActiveChat) {
+        // Expand sidebar if on chat page
+        if (expandBtn) {
+            expandBtn.click();
+        }
+    } else {
+        // Collapse sidebar on all other pages for full display width
+        if (collapseBtn) {
+            collapseBtn.click();
+        }
+    }
+    </script>
+    """.replace("IS_ACTIVE_CHAT", is_active_chat_str)
+    
+    import streamlit.components.v1 as components
+    components.html(js_code, height=0, width=0)
+
+    # CSS to style navbar block and align buttons
+    st.markdown("""
+    <style>
+    /* Align all columns inside the top navbar horizontally and center them vertically */
+    div[data-testid="stBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type {
+        align-items: center !important;
+        background-color: #1f2937 !important;
+        border: 1px solid #374151 !important;
+        border-radius: 12px !important;
+        padding: 8px 16px !important;
+        margin-bottom: 24px !important;
+    }
+    
+    /* Remove vertical spacing offset for navbar buttons */
+    div[data-testid="stBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type div[data-testid="column"] {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    div[data-testid="stBlock"] > div[data-testid="stHorizontalBlock"]:first-of-type button {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Use 8 columns: Brand + 6 page links + Logout
+    cols = st.columns([1.6, 1.2, 1.2, 1.2, 1.2, 1.2, 1.1, 1.1])
+    
+    with cols[0]:
+        st.markdown("<div style='font-size: 20px; font-weight: bold; color: #f9fafb;'>🎓 EduMind</div>", unsafe_allow_html=True)
+        
+    pages_config = [
+        ("🏠 Dashboard", "pages/dashboard.py", "dashboard.py"),
+        ("💬 Chat", "pages/chat.py", "chat.py"),
+        ("📂 Materials", "pages/upload.py", "upload.py"),
+        ("🎯 Quiz", "pages/quiz.py", "quiz.py"),
+        ("📊 Progress", "pages/progress.py", "progress.py"),
+        ("⚙️ Settings", "pages/settings.py", "settings.py"),
+    ]
+    
+    for idx, (label, path, filename) in enumerate(pages_config, start=1):
+        with cols[idx]:
+            is_active = (filename == active_page)
+            btn_type = "primary" if is_active else "secondary"
+            if st.button(label, key=f"nav_{filename}", use_container_width=True, type=btn_type):
+                st.switch_page(path)
+                
+    with cols[7]:
+        if st.button("🚪 Logout", key="nav_logout", use_container_width=True, type="secondary"):
+            st.session_state.clear()
+            st.switch_page("pages/landing.py")
+

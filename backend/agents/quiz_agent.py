@@ -29,14 +29,25 @@ def quiz_gen_node(state):
     # Get general context to generate broad questions
     context = get_relevant_context("Overview and key concepts", pdf_id, k=5)
     
+    if not context or not context.strip():
+        return {
+            "agent_response": "No study content found for this PDF in the vector database. Please use the 'Sync & Chat' uploader to index it first."
+        }
+    
     formatted_prompt = QUIZ_GEN_PROMPT.format(context=context)
     
     response = llm.invoke([HumanMessage(content=formatted_prompt)])
     
+    print(f"\n--- [DEBUG QUIZ GEN] RAW LLM OUTPUT ---\n{response.content}\n---------------------------------------\n")
+    
     # Try to parse JSON output
     try:
-        # Simple cleanup in case of extra markdown
-        content = response.content.replace("```json", "").replace("```", "").strip()
+        import re
+        content = response.content.strip()
+        # Find the first '{' and the last '}' to extract the JSON block safely
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if json_match:
+            content = json_match.group(0)
         quiz_data = json.loads(content)
         return {"active_quiz_data": quiz_data, "agent_response": "Quiz generated! Good luck."}
     except Exception as e:
@@ -80,7 +91,13 @@ def quiz_eval_node(state):
             eval_res = llm.invoke([HumanMessage(content=eval_prompt)])
             
             try:
-                eval_data = json.loads(eval_res.content.replace("```json", "").replace("```", "").strip())
+                import re
+                content = eval_res.content.strip()
+                # Find the first '{' and the last '}' to extract the JSON block safely
+                json_match = re.search(r'\{.*\}', content, re.DOTALL)
+                if json_match:
+                    content = json_match.group(0)
+                eval_data = json.loads(content)
                 is_correct = eval_data.get("is_correct", False)
                 results.append({
                     "question": q['question'],

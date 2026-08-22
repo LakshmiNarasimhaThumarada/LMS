@@ -183,7 +183,8 @@ st.markdown(f"""
 if 'jwt_token' not in st.session_state:
     st.switch_page('pages/login.py')
 
-API_BASE = "http://localhost:6000/api"
+# Ensure stable IPv4 connection for Windows
+API_BASE = "http://127.0.0.1:6000/api"
 headers = {"Authorization": f"Bearer {st.session_state.jwt_token}"}
 
 # --- Data Fetching ---
@@ -193,13 +194,14 @@ def fetch_pdfs():
         if res.status_code == 200:
             return res.json()
         return []
-    except:
+    except Exception as e:
+        print(f"[DEBUG MATERIALS FETCH] Error: {e}")
         return []
 
 # --- Delete Function ---
 def delete_material(pdf_id):
     try:
-        res = requests.delete(f"{API_BASE}/docs/{pdf_id}", headers=headers, timeout=10)
+        res = requests.delete(f"{API_BASE}/pdf/{pdf_id}", headers=headers, timeout=10)
         if res.status_code == 200:
             st.success("Successfully deleted material")
             time.sleep(1)
@@ -244,11 +246,29 @@ if uploaded_file is not None:
             files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/pdf")}
             try:
                 with st.spinner("Processing & Synchronizing..."):
-                    res = requests.post(f"{API_BASE}/docs/upload", files=files, headers=headers, timeout=60)
+                    res = requests.post(f"{API_BASE}/pdf/upload", files=files, headers=headers, timeout=60)
                     if res.status_code == 201:
-                        st.markdown("<div style='color: #10b981; font-weight: 600; margin-top: 10px;'>✅ Synchronized successfully!</div>", unsafe_allow_html=True)
+                        pdf_id = res.json().get("pdf_id")
+                        # Synchronize and index in FastAPI vectorstore
+                        fastapi_headers = {"Authorization": f"Bearer {st.session_state.jwt_token}"}
+                        fastapi_files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/pdf")}
+                        
+                        try:
+                            f_res = requests.post(
+                                f"http://127.0.0.1:8000/api/planner/analyze-pdf?pdf_id={pdf_id}",
+                                headers=fastapi_headers,
+                                files=fastapi_files,
+                                timeout=120
+                            )
+                            if f_res.status_code == 200:
+                                st.markdown("<div style='color: #10b981; font-weight: 600; margin-top: 10px;'>✅ Synchronized and indexed successfully!</div>", unsafe_allow_html=True)
+                            else:
+                                st.markdown("<div style='color: #f59e0b; font-weight: 600; margin-top: 10px;'>⚠️ Synced with Express, but RAG indexing had issues.</div>", unsafe_allow_html=True)
+                        except Exception as fe:
+                            st.markdown(f"<div style='color: #ef4444; font-weight: 600; margin-top: 10px;'>❌ Synced, but indexing connection failed: {str(fe)}</div>", unsafe_allow_html=True)
+                        
                         st.session_state[f"uploaded_{uploaded_file.name}"] = True
-                        time.sleep(1)
+                        time.sleep(1.5)
                         st.rerun()
                     else:
                         st.error(f"Upload failed: {res.json().get('message', 'Unknown error')}")

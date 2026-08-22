@@ -1,13 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
 from bson import ObjectId
 from backend.utils.auth import require_jwt
-from backend.db import db
 from backend.agents.quiz_agent import quiz_gen_node, quiz_eval_node
 
 router = APIRouter()
+
+# Dependency to get database from FastAPI application state
+async def get_db(request: Request):
+    return request.app.state.db
 
 class QuizGenerateRequest(BaseModel):
     pdf_id: str
@@ -26,7 +29,8 @@ class QuizSaveResultRequest(BaseModel):
 @router.post("/generate")
 async def generate_quiz(
     request: QuizGenerateRequest,
-    user = Depends(require_jwt)
+    user = Depends(require_jwt),
+    db = Depends(get_db)
 ):
     try:
         # Run real LangGraph AI Quiz Agent node
@@ -89,7 +93,8 @@ async def generate_quiz(
 @router.post("/evaluate")
 async def evaluate_quiz(
     request: QuizEvaluateRequest,
-    user = Depends(require_jwt)
+    user = Depends(require_jwt),
+    db = Depends(get_db)
 ):
     try:
         # Retrieve quiz session from MongoDB
@@ -133,7 +138,8 @@ async def evaluate_quiz(
 @router.post("/save-result")
 async def save_quiz_result(
     request: QuizSaveResultRequest,
-    user = Depends(require_jwt)
+    user = Depends(require_jwt),
+    db = Depends(get_db)
 ):
     try:
         # Parse score (e.g. "3/5")

@@ -228,37 +228,6 @@ stats = fetch_dashboard_data(token)
 user_profile = fetch_user_profile(token)
 user_name = user_profile.get('name', 'Student')
 
-# 3. SIDEBAR
-with st.sidebar:
-    # Logo
-    st.markdown("""
-        <div class="logo-container">
-            <div class="logo-text">🎓 EduMind</div>
-            <div class="logo-tagline">Your AI Learning Partner</div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Navigation
-    nav_items = [
-        ("📊 Dashboard", True),
-        ("💬 Chat With AI", False),
-        ("📁 My Materials", False),
-        ("📝 Generate Quiz", False),
-        ("📈 Study Progress", False),
-        ("⚙️ Settings", False)
-    ]
-
-    for label, active in nav_items:
-        active_class = "active" if active else ""
-        st.markdown(f'<div class="nav-item {active_class}">{label}</div>', unsafe_allow_html=True)
-
-    # Logout Button at bottom
-    st.markdown('<div class="logout-container">', unsafe_allow_html=True)
-    if st.button("🚪 Logout", key="logout_btn", use_container_width=True):
-        st.session_state.clear()
-        st.switch_page('EduMind.py')
-    st.markdown('</div>', unsafe_allow_html=True)
-
 # 4. MAIN CONTENT
 # Welcome Header
 st.markdown(f'<div class="welcome-header">Welcome to EduMind, {user_name}</div>', unsafe_allow_html=True)

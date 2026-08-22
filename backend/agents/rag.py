@@ -44,7 +44,7 @@ def get_relevant_context(query, pdf_id, k=4):
     if is_summary_request:
         try:
             # Retrieve all chunks for this PDF to extract the beginning of the file (introduction/abstract)
-            all_data = db.get(filter={"pdf_id": str(pdf_id)})
+            all_data = db.get(where={"pdf_id": str(pdf_id)})
             documents = all_data.get("documents", [])
             metadatas = all_data.get("metadatas", [])
             
