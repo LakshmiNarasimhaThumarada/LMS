@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 from backend.config import settings
-from backend.routes import planner, notifications, progress, calendar, chat
+from backend.routes import planner, notifications, progress, calendar, chat, quiz
 from backend.utils.db_indexes import create_indexes
 
 # Database connection
@@ -56,6 +56,7 @@ app.include_router(notifications.router, prefix="/api/notifications", tags=["Not
 app.include_router(progress.router, prefix="/api/progress", tags=["Progress"])
 app.include_router(calendar.router, prefix="/api/calendar", tags=["Calendar"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat Agent"])
+app.include_router(quiz.router, prefix="/api/quiz", tags=["Quiz Agent"])
 
 @app.get("/")
 async def root():

@@ -317,18 +317,9 @@ st.markdown("""
 message_container = st.container()
 
 with message_container:
-    st.markdown('<div class="message-container">', unsafe_allow_html=True)
     for msg in st.session_state.messages:
-        if msg["role"] == "user":
-            st.markdown(f'<div class="user-bubble">{msg["content"]}</div>', unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-                <div class="ai-bubble-wrapper">
-                    <div class="ai-label">AI ASSISTANT</div>
-                    <div class="ai-bubble">{msg["content"]}</div>
-                </div>
-            """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
 # Chat Input Logic
 input_placeholder = "Query the system..."
@@ -370,29 +361,21 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             if response.status_code == 200:
                 full_response = response.json().get("response", "No response received.")
                 
-                # 3. Stream Response (Simulated word by word)
-                ai_msg_placeholder = st.empty()
-                curr_text = ""
-                words = full_response.split()
+                # 3. Stream Response (Simulated word by word, preserving formatting)
+                with st.chat_message("assistant"):
+                    ai_msg_placeholder = st.empty()
+                    curr_text = ""
+                    # Split by single space to preserve newlines (\n)
+                    words = full_response.split(' ')
+                    
+                    for word in words:
+                        curr_text += word + " "
+                        ai_msg_placeholder.markdown(curr_text + "▌")
+                        time.sleep(0.015) # Fast, natural stream speed
+                    
+                    ai_msg_placeholder.markdown(curr_text.strip())
                 
-                for word in words:
-                    curr_text += word + " "
-                    ai_msg_placeholder.markdown(f"""
-                        <div class="ai-bubble-wrapper">
-                            <div class="ai-label">AI ASSISTANT</div>
-                            <div class="ai-bubble">{curr_text}▌</div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    time.sleep(0.05)
-                
-                ai_msg_placeholder.markdown(f"""
-                    <div class="ai-bubble-wrapper">
-                        <div class="ai-label">AI ASSISTANT</div>
-                        <div class="ai-bubble">{curr_text}</div>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                st.session_state.messages.append({"role": "assistant", "content": curr_text.strip()})
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
                 
             else:
                 st.error(f"Error: {response.status_code} - {response.text}")
