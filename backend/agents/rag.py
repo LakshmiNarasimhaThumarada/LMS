@@ -11,8 +11,9 @@ EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 # Initialize cloud embeddings (Uses 0 MB of local RAM)
 from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACEHUB_API_TOKEN") or "hf_dummy_token_for_validation"
 embeddings = HuggingFaceInferenceAPIEmbeddings(
-    api_key=os.getenv("HF_TOKEN"),
+    api_key=hf_token,
     model_name=EMBEDDING_MODEL
 )
 
