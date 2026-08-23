@@ -1,21 +1,50 @@
 import os
-from langchain_community.vectorstores import Chroma
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from dotenv import load_dotenv
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
-from dotenv import load_dotenv
 
 load_dotenv()
 
 # Configuration
 CHROMA_PATH = "chroma_db"
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
-# Initialize embeddings (Local & Free)
-embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
+# Initialize cloud embeddings (Uses 0 MB of local RAM)
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+embeddings = HuggingFaceInferenceAPIEmbeddings(
+    api_key=os.getenv("HF_TOKEN"),
+    model_name=EMBEDDING_MODEL
+)
+
+# Detect if we should use Pinecone (cloud) or local Chroma
+USE_PINECONE = os.getenv("PINECONE_API_KEY") is not None
+
+if USE_PINECONE:
+    from pinecone import Pinecone as PineconeClient
+    from langchain_community.vectorstores import Pinecone
+    
+    PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+    PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST")
+    
+    def get_vectorstore():
+        index_name = "edumind-index"
+        if PINECONE_INDEX_HOST:
+            # Parse index name from host URL, e.g., https://edumind-index-xxxx.svc... -> edumind-index-xxxx
+            host_clean = PINECONE_INDEX_HOST.replace("https://", "")
+            parts = host_clean.split(".")
+            if parts:
+                index_name = parts[0]
+        return Pinecone.from_existing_index(
+            index_name=index_name,
+            embedding=embeddings
+        )
+else:
+    from langchain_community.vectorstores import Chroma
+    def get_vectorstore():
+        return Chroma(persist_directory=CHROMA_PATH, embedding_function=embeddings)
 
 def add_pdf_to_vectorstore(pdf_path, pdf_id):
-    """Loads a PDF, splits it, and adds it to Chroma with pdf_id as metadata."""
+    """Loads a PDF, splits it, and adds it to the active vectorstore."""
     loader = PyPDFLoader(pdf_path)
     documents = loader.load()
     
@@ -26,16 +55,21 @@ def add_pdf_to_vectorstore(pdf_path, pdf_id):
     for chunk in chunks:
         chunk.metadata["pdf_id"] = str(pdf_id)
         
-    db = Chroma.from_documents(
-        chunks, 
-        embeddings, 
-        persist_directory=CHROMA_PATH
-    )
+    if USE_PINECONE:
+        db = get_vectorstore()
+        db.add_documents(chunks)
+    else:
+        from langchain_community.vectorstores import Chroma
+        Chroma.from_documents(
+            chunks, 
+            embeddings, 
+            persist_directory=CHROMA_PATH
+        )
     return True
 
 def get_relevant_context(query, pdf_id, k=4):
     """Retrieves top-k context chunks for a specific PDF, with smart summary detection."""
-    db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embeddings)
+    db = get_vectorstore()
     
     # Check if the user is asking for a summary/overview of the document
     summary_keywords = ["summarize", "summary", "overview", "synopsis", "what is this", "what is the document", "about"]
@@ -43,21 +77,29 @@ def get_relevant_context(query, pdf_id, k=4):
     
     if is_summary_request:
         try:
-            # Retrieve all chunks for this PDF to extract the beginning of the file (introduction/abstract)
-            all_data = db.get(where={"pdf_id": str(pdf_id)})
-            documents = all_data.get("documents", [])
-            metadatas = all_data.get("metadatas", [])
-            
-            if documents:
-                # Pair documents and metadata, and sort by page number
-                paired_docs = list(zip(documents, metadatas))
-                paired_docs.sort(key=lambda x: x[1].get("page", 0))
-                
-                # Take the first k chunks representing the introduction/start of the PDF
-                selected_docs = paired_docs[:k]
-                context = "\n\n".join([doc[0] for doc in selected_docs])
+            if USE_PINECONE:
+                # Semantic search for summary overview
+                results = db.similarity_search(
+                    "introduction overview summary", 
+                    k=k, 
+                    filter={"pdf_id": str(pdf_id)}
+                )
+                context = "\n\n".join([doc.page_content for doc in results])
                 if context.strip():
                     return context
+            else:
+                # Local Chroma support
+                all_data = db.get(where={"pdf_id": str(pdf_id)})
+                documents = all_data.get("documents", [])
+                metadatas = all_data.get("metadatas", [])
+                
+                if documents:
+                    paired_docs = list(zip(documents, metadatas))
+                    paired_docs.sort(key=lambda x: x[1].get("page", 0))
+                    selected_docs = paired_docs[:k]
+                    context = "\n\n".join([doc[0] for doc in selected_docs])
+                    if context.strip():
+                        return context
         except Exception as e:
             print(f"Error fetching summary chunks: {e}")
             

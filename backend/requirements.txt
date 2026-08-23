@@ -44,6 +44,6 @@ plotly==5.18.0
 
 # RAG & Embeddings
 chromadb==1.5.1
-sentence-transformers
 pypdf
+pinecone-client
 
