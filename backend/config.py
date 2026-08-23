@@ -9,8 +9,12 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "default_secret_key"
     
     # MongoDB
-    MONGO_URI: str = os.getenv("MONGODB_URI") or os.getenv("MONGO_URI") or "mongodb://127.0.0.1:27017/edumind"
+    MONGODB_URI: str = "mongodb://127.0.0.1:27017/edumind"
     DATABASE_NAME: str = "edumind"
+    
+    @property
+    def MONGO_URI(self) -> str:
+        return self.MONGODB_URI
     
     # LLM APIs
     GROQ_API_KEY: str = ""
