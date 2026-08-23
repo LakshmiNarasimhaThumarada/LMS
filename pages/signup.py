@@ -176,7 +176,7 @@ def signup_user(name, email, password):
             error_data = response.json()
             return None, error_data.get("message", "Registration failed")
     except Exception as e:
-        return None, "Connection failed. Please ensure the backend is running."
+        return None, f"Connection failed: {str(e)}"
 
 # Session State
 if 'signup_error' not in st.session_state:

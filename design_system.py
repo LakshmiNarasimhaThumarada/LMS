@@ -2,8 +2,8 @@ import streamlit as st
 import os
 
 # API Endpoint Configurations (load dynamically from env or fallback to local)
-EXPRESS_URL = os.getenv("EXPRESS_URL", "http://127.0.0.1:6000")
-FASTAPI_URL = os.getenv("FASTAPI_URL", "http://127.0.0.1:8000")
+EXPRESS_URL = os.getenv("EXPRESS_URL", "http://127.0.0.1:6000").rstrip("/")
+FASTAPI_URL = os.getenv("FASTAPI_URL", "http://127.0.0.1:8000").rstrip("/")
 
 # ==========================================
 # DESIGN TOKENS

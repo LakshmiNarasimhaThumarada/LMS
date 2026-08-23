@@ -158,7 +158,7 @@ def login_user(email, password):
             error_data = response.json()
             return None, error_data.get("error", "Invalid credentials")
     except Exception as e:
-        return None, "Connection failed. Please ensure the backend is running."
+        return None, f"Connection failed: {str(e)}"
 
 # Login Page UI
 with st.container():
