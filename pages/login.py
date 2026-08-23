@@ -151,7 +151,7 @@ def validate_email(email):
 def login_user(email, password):
     API_URL = f"{EXPRESS_URL}/api/auth/login"
     try:
-        response = requests.post(API_URL, json={"email": email, "password": password}, timeout=10)
+        response = requests.post(API_URL, json={"email": email, "password": password}, timeout=60)
         if response.status_code == 200:
             return response.json(), None
         else:

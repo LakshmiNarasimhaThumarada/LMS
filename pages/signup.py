@@ -169,7 +169,7 @@ def signup_user(name, email, password):
             "name": name,
             "email": email,
             "password": password
-        }, timeout=10)
+        }, timeout=60)
         if response.status_code in [200, 201]:
             return response.json(), None
         else:
