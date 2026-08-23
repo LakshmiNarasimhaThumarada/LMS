@@ -16,6 +16,8 @@ class BaseAgent:
     
     def __init__(self, model_name: Optional[str] = None):
         model = model_name or settings.GROQ_MODEL
+        if not model or model.strip() == "":
+            model = "llama-3.1-8b-instant"
         self.llm = ChatGroq(
             model=model,
             api_key=settings.GROQ_API_KEY,

@@ -58,3 +58,8 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+
+# Post-load validation and fallback for empty model settings
+if not settings.GROQ_MODEL or settings.GROQ_MODEL.strip() == "":
+    settings.GROQ_MODEL = "llama-3.1-8b-instant"
+
