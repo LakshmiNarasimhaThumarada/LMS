@@ -354,7 +354,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
             }
             headers = {"Authorization": f"Bearer {token}"}
             
-            response = requests.post(api_url, json=payload, headers=headers, timeout=30)
+            response = requests.post(api_url, json=payload, headers=headers, timeout=60)
             
             typing_placeholder.empty()
             
