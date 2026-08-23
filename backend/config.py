@@ -2,6 +2,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 import os
 
+print("=== DEPLOYMENT ENV DEBUG ===")
+print("Injected Keys:", [k for k in os.environ.keys() if "MONGO" in k or "KEY" in k or "TOKEN" in k])
+print("=============================")
+
 class Settings(BaseSettings):
     # API
     API_HOST: str = "0.0.0.0"
@@ -9,7 +13,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "default_secret_key"
     
     # MongoDB
-    MONGODB_URI: str = "mongodb://127.0.0.1:27017/edumind"
+    MONGODB_URI: str = os.getenv("MONGODB_URI") or os.getenv("MONGO_URI") or "mongodb://127.0.0.1:27017/edumind"
     DATABASE_NAME: str = "edumind"
     
     @property
