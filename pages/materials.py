@@ -184,7 +184,7 @@ if 'jwt_token' not in st.session_state:
     st.switch_page('pages/login.py')
 
 # Ensure stable IPv4 connection for Windows
-API_BASE = "http://127.0.0.1:6000/api"
+API_BASE = f"{EXPRESS_URL}/api"
 headers = {"Authorization": f"Bearer {st.session_state.jwt_token}"}
 
 # --- Data Fetching ---

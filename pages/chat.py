@@ -19,7 +19,7 @@ inject_custom_css()
 def fetch_student_pdfs(token):
     headers = {"Authorization": f"Bearer {token}"}
     try:
-        res = requests.get("http://127.0.0.1:6000/api/student/pdfs", headers=headers, timeout=5)
+        res = requests.get(f"{EXPRESS_URL}/api/student/pdfs", headers=headers, timeout=5)
         if res.status_code == 200:
             return res.json()
         else:
@@ -255,7 +255,7 @@ with st.sidebar:
             files = {"file": (chat_uploaded_file.name, chat_uploaded_file.getvalue(), "application/pdf")}
             try:
                 with st.spinner("Syncing with Express..."):
-                    r = requests.post("http://127.0.0.1:6000/api/pdf/upload", headers=headers, files=files, timeout=60)
+                    r = requests.post(f"{EXPRESS_URL}/api/pdf/upload", headers=headers, files=files, timeout=60)
                 
                 if r.status_code == 201:
                     pdf_id = r.json().get("pdf_id")
@@ -263,7 +263,7 @@ with st.sidebar:
                         fastapi_headers = {"Authorization": f"Bearer {token}"}
                         fastapi_files = {"file": (chat_uploaded_file.name, chat_uploaded_file.getvalue(), "application/pdf")}
                         f_res = requests.post(
-                            f"http://127.0.0.1:8000/api/planner/analyze-pdf?pdf_id={pdf_id}",
+                            f"{FASTAPI_URL}/api/planner/analyze-pdf?pdf_id={pdf_id}",
                             headers=fastapi_headers,
                             files=fastapi_files,
                             timeout=120
@@ -346,7 +346,7 @@ if st.session_state.messages and st.session_state.messages[-1]["role"] == "user"
         # 2. Call API
         try:
             token = st.session_state.jwt_token
-            api_url = "http://127.0.0.1:8000/api/chat"
+            api_url = f"{FASTAPI_URL}/api/chat"
             payload = {
                 "message": st.session_state.messages[-1]["content"],
                 "pdf_id": selected_pdf_id,

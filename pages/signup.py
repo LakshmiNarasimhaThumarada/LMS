@@ -163,7 +163,7 @@ def check_password_strength(password):
 
 # Signup Logic
 def signup_user(name, email, password):
-    API_URL = "http://127.0.0.1:6000/api/auth/signup"
+    API_URL = f"{EXPRESS_URL}/api/auth/signup"
     try:
         response = requests.post(API_URL, json={
             "name": name,

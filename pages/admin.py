@@ -101,7 +101,7 @@ if user.get('role') != 'admin':
     st.switch_page('pages/dashboard.py')
     st.stop()
 
-API_BASE = "http://localhost:6000/api"
+API_BASE = f"{EXPRESS_URL}/api"
 headers = {"Authorization": f"Bearer {st.session_state.jwt_token}"}
 
 # --- Data Fetching ---

@@ -149,7 +149,7 @@ def validate_email(email):
 
 # Authentication logic
 def login_user(email, password):
-    API_URL = "http://127.0.0.1:6000/api/auth/login"
+    API_URL = f"{EXPRESS_URL}/api/auth/login"
     try:
         response = requests.post(API_URL, json={"email": email, "password": password}, timeout=10)
         if response.status_code == 200:

@@ -95,8 +95,8 @@ with st.container():
             files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/pdf")}
             try:
                 with st.spinner("Processing document architecture..."):
-                    # 1. Sync with Express Server (Port 6000)
-                    r = requests.post("http://127.0.0.1:6000/api/pdf/upload", headers=headers, files=files, timeout=60)
+                    # 1. Sync with Express Server
+                    r = requests.post(f"{EXPRESS_URL}/api/pdf/upload", headers=headers, files=files, timeout=60)
                 
                 if r.status_code == 201:
                     pdf_id = r.json().get("pdf_id")
@@ -108,7 +108,7 @@ with st.container():
                         
                         try:
                             f_res = requests.post(
-                                f"http://127.0.0.1:8000/api/planner/analyze-pdf?pdf_id={pdf_id}",
+                                f"{FASTAPI_URL}/api/planner/analyze-pdf?pdf_id={pdf_id}",
                                 headers=fastapi_headers,
                                 files=fastapi_files,
                                 timeout=120
@@ -131,7 +131,7 @@ with st.container():
 st.markdown("<h3 style='margin-bottom:1.5rem;'>Synchronized Materials</h3>", unsafe_allow_html=True)
 
 try:
-    res = requests.get("http://127.0.0.1:6000/api/student/pdfs", headers=headers, timeout=5)
+    res = requests.get(f"{EXPRESS_URL}/api/student/pdfs", headers=headers, timeout=5)
     if res.status_code == 200:
         pdfs = res.json()
         if pdfs:
@@ -171,7 +171,7 @@ try:
                 if st.button("Delete from Workspace", use_container_width=True):
                     # Find ID
                     doc_id = df[df['filename'] == selected_pdf]['id'].iloc[0]
-                    requests.delete(f"http://127.0.0.1:6000/api/pdf/{doc_id}", headers=headers)
+                    requests.delete(f"{EXPRESS_URL}/api/pdf/{doc_id}", headers=headers)
                     st.success("Resource de-synchronized.")
                     time.sleep(1)
                     st.rerun()
