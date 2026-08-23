@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "default_secret_key"
     
     # MongoDB
-    MONGO_URI: str = "mongodb://127.0.0.1:27017/edumind"
+    MONGO_URI: str = os.getenv("MONGODB_URI") or os.getenv("MONGO_URI") or "mongodb://127.0.0.1:27017/edumind"
     DATABASE_NAME: str = "edumind"
     
     # LLM APIs
