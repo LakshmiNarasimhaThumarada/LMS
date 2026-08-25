@@ -28,12 +28,6 @@ if USE_PINECONE:
     
     def get_vectorstore():
         index_name = "edumind-index"
-        if PINECONE_INDEX_HOST:
-            # Parse index name from host URL, e.g., https://edumind-index-xxxx.svc... -> edumind-index-xxxx
-            host_clean = PINECONE_INDEX_HOST.replace("https://", "")
-            parts = host_clean.split(".")
-            if parts:
-                index_name = parts[0]
         return PineconeVectorStore(
             index_name=index_name,
             embedding=embeddings,
