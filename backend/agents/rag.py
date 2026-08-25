@@ -21,8 +21,7 @@ embeddings = HuggingFaceInferenceAPIEmbeddings(
 USE_PINECONE = os.getenv("PINECONE_API_KEY") is not None
 
 if USE_PINECONE:
-    from pinecone import Pinecone as PineconeClient
-    from langchain_community.vectorstores import Pinecone
+    from langchain_pinecone import PineconeVectorStore
     
     PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
     PINECONE_INDEX_HOST = os.getenv("PINECONE_INDEX_HOST")
@@ -35,9 +34,10 @@ if USE_PINECONE:
             parts = host_clean.split(".")
             if parts:
                 index_name = parts[0]
-        return Pinecone.from_existing_index(
+        return PineconeVectorStore(
             index_name=index_name,
-            embedding=embeddings
+            embedding=embeddings,
+            pinecone_api_key=PINECONE_API_KEY
         )
 else:
     from langchain_community.vectorstores import Chroma
