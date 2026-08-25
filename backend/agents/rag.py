@@ -14,7 +14,8 @@ from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACEHUB_API_TOKEN") or "hf_dummy_token_for_validation"
 embeddings = HuggingFaceInferenceAPIEmbeddings(
     api_key=hf_token,
-    model_name=EMBEDDING_MODEL
+    model_name=EMBEDDING_MODEL,
+    api_url="https://router.huggingface.co/pipeline/feature-extraction"
 )
 
 # Detect if we should use Pinecone (cloud) or local Chroma
