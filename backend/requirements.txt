@@ -47,4 +47,5 @@ chromadb==1.5.1
 pypdf
 pinecone
 langchain-pinecone
+fastembed
 

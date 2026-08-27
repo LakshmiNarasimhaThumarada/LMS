@@ -1,10 +1,8 @@
 import os
-import requests
-from typing import List
 from dotenv import load_dotenv
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_core.embeddings import Embeddings
+from langchain_community.embeddings import FastEmbedEmbeddings
 
 load_dotenv()
 
@@ -12,50 +10,9 @@ load_dotenv()
 CHROMA_PATH = "chroma_db"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
-# Initialize cloud embeddings (Uses 0 MB of local RAM)
-class CustomHFEmbeddings(Embeddings):
-    def __init__(self, api_key: str, model_name: str, api_url: str):
-        self.api_key = api_key
-        self.model_name = model_name
-        self.api_url = api_url
-
-    def embed_documents(self, texts: List[str]) -> List[List[float]]:
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        try:
-            response = requests.post(
-                self.api_url,
-                headers=headers,
-                json={"inputs": texts, "options": {"wait_for_model": True}},
-                timeout=30
-            )
-        except Exception as e:
-            print(f"[HF ERROR] HTTP request failed: {e}")
-            raise e
-
-        if response.status_code != 200:
-            print(f"[HF ERROR] Status Code: {response.status_code}")
-            print(f"[HF ERROR] Response Headers: {response.headers}")
-            print(f"[HF ERROR] Response Body: {response.text}")
-            raise Exception(f"HuggingFace embedding failed: {response.status_code} - {response.text}")
-            
-        try:
-            res_json = response.json()
-            if isinstance(res_json, dict) and "error" in res_json:
-                raise Exception(f"HuggingFace error response: {res_json['error']}")
-            return res_json
-        except Exception as e:
-            print(f"[HF ERROR] JSON parse failed: {e}")
-            print(f"[HF ERROR] Raw text: {response.text[:500]}")
-            raise
-
-    def embed_query(self, text: str) -> List[float]:
-        return self.embed_documents([text])[0]
-
-hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGINGFACEHUB_API_TOKEN") or "hf_dummy_token_for_validation"
-embeddings = CustomHFEmbeddings(
-    api_key=hf_token,
-    model_name=EMBEDDING_MODEL,
-    api_url=f"https://router.huggingface.co/models/{EMBEDDING_MODEL}"
+# Initialize local FastEmbed embeddings (Ultra-fast, uses ~40MB RAM, zero API calls!)
+embeddings = FastEmbedEmbeddings(
+    model_name=EMBEDDING_MODEL
 )
 
 # Detect if we should use Pinecone (cloud) or local Chroma
