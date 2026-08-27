@@ -197,6 +197,7 @@ const isAdmin = (req, res, next) => {
 };
 
 // Health Check
+app.get('/', (req, res) => res.send('Backend is running'));
 app.get('/health', (req, res) => res.send('Backend is running'));
 
 // DB Diagnostic Endpoint
